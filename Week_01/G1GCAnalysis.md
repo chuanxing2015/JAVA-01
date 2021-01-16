@@ -145,4 +145,125 @@ PS Old Generation
 ```
 如果没有参数-XX:-UseAdaptiveSizePolicy，eden,s0,s1的比例不确定，但是eden和s区的大比例是不变的。开启之后eden:s0:s1约等于8：1：1
 
+7. 使用CMS垃圾回收期
+```
+java -jar -Xms2g -Xmx2g  -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=2 gateway-server-0.0.1-SNAPSHOT.jar
+
+   MaxHeapSize              = 2147483648 (2048.0MB)
+   NewSize                  = 174456832 (166.375MB)
+   MaxNewSize               = 174456832 (166.375MB)
+   OldSize                  = 1973026816 (1881.625MB)
+   
+java -jar -Xms2g -Xmx2g  -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=8 gateway-server-0.0.1-SNAPSHOT.jar
+   MaxHeapSize              = 2147483648 (2048.0MB)
+   NewSize                  = 697892864 (665.5625MB)
+   MaxNewSize               = 697892864 (665.5625MB)
+   OldSize                  = 1449590784 (1382.4375MB)
+   
+   本机默认ParallelGCThreads=4
+Parallel GC和CMS GC的最大young区大小如何计算:
+Parallel下 ， young = 堆内存/3;
+CMS下，young = 64M * 并发GC线程数(4) * 13 / 10
+
+区分young区的parnew gc线程数和old区的cms线程数，分别为以下两参数：
+-XX:ParallelGCThreads=m
+-XX:ConcGCThreads=n
+
+其中ParallelGCThreads 参数的默认值是：
+CPU核心数 <= 8，则为 ParallelGCThreads=CPU核心数，比如我的那个旧电脑是4
+CPU核心数 > 8，则为 ParallelGCThreads = CPU核心数 * 5/8 + 3 向下取整
+16核的情况下，ParallelGCThreads = 13
+32核的情况下，ParallelGCThreads = 23
+64核的情况下，ParallelGCThreads = 43
+72核的情况下，ParallelGCThreads = 48
+
+ConcGCThreads的默认值则为：
+ConcGCThreads = (ParallelGCThreads + 3)/4 向下去整。
+ParallelGCThreads = 1~4时，ConcGCThreads = 1
+ParallelGCThreads = 5~8时，ConcGCThreads = 2
+ParallelGCThreads = 13~16时，ConcGCThreads = 4
+```
+
+8. 使用G1GC
+```
+java -jar -Xms2g -Xmx2g  -XX:+UseG1GC  -XX:-UseAdaptiveSizePolicy gateway-server-0.0.1-SNAPSHOT.jar
+
+Heap Configuration:
+   MinHeapFreeRatio         = 40
+   MaxHeapFreeRatio         = 70
+   MaxHeapSize              = 2147483648 (2048.0MB)
+   NewSize                  = 1363144 (1.2999954223632812MB)
+   MaxNewSize               = 1287651328 (1228.0MB)
+   OldSize                  = 5452592 (5.1999969482421875MB)
+   NewRatio                 = 2
+   SurvivorRatio            = 8
+   MetaspaceSize            = 21807104 (20.796875MB)
+   CompressedClassSpaceSize = 1073741824 (1024.0MB)
+   MaxMetaspaceSize         = 17592186044415 MB
+   G1HeapRegionSize         = 1048576 (1.0MB)  // 每个块的大小
+
+Heap Usage:
+G1 Heap:
+   regions  = 2048 //划分的块数量
+   capacity = 2147483648 (2048.0MB)
+   used     = 282066928 (268.99998474121094MB)
+   free     = 1865416720 (1779.000015258789MB)
+   13.13476487994194% used
+   
+java -jar -Xms1g -Xmx1g  -XX:+UseG1GC  -XX:-UseAdaptiveSizePolicy gateway-server-0.0.1-SNAPSHOT.jar
+
+Heap Configuration:
+   MinHeapFreeRatio         = 40
+   MaxHeapFreeRatio         = 70
+   MaxHeapSize              = 1073741824 (1024.0MB)
+   NewSize                  = 1363144 (1.2999954223632812MB)
+   MaxNewSize               = 643825664 (614.0MB)           //MaxNewsize才614M,但是下方的Eden+Survirvor = 645M,感觉很奇怪
+   OldSize                  = 5452592 (5.1999969482421875MB)
+   NewRatio                 = 2
+   SurvivorRatio            = 8
+   MetaspaceSize            = 21807104 (20.796875MB)
+   CompressedClassSpaceSize = 1073741824 (1024.0MB)
+   MaxMetaspaceSize         = 17592186044415 MB
+   G1HeapRegionSize         = 1048576 (1.0MB)// 这个值为1，2，4，8 就是2的幂次方
+
+Heap Usage:
+G1 Heap:
+   regions  = 1024 //因为每个块最小是1M,当内存1024M是，就只能划1024个块
+   capacity = 1073741824 (1024.0MB)
+   used     = 445120504 (424.49999237060547MB)
+   free     = 628621320 (599.5000076293945MB)
+   41.45507737994194% used
+G1 Young Generation:
+Eden Space:
+   regions  = 413
+   capacity = 663748608 (633.0MB)
+   used     = 433061888 (413.0MB)
+   free     = 230686720 (220.0MB)
+   65.24486571879937% used
+Survivor Space:
+   regions  = 12
+   capacity = 12582912 (12.0MB)
+   used     = 12582912 (12.0MB)
+   free     = 0 (0.0MB)
+   100.0% used
+G1 Old Generation:
+   regions  = 0
+   capacity = 397410304 (379.0MB)
+   used     = 0 (0.0MB)
+   free     = 397410304 (379.0MB)
+   0.0% used
+   
+   总结： 
+   1. G1垃圾收集器没有前面垃圾收集器分区的概念，G1划分为2048块，老年代和新生代公用
+   2. 上边的疑问：Eden+Survirovr 约等于 MaxNewSize * 1.05 = 645M
+   3. MaxNewSize = 堆内存*G1MaxNewSizePercent，G1MaxNewSizePercent默认60%
+   参考30题：https://shimo.im/docs/qWjRqThYVTTh3Hrd 
+```
+
+
+
+
+
+
+
 
