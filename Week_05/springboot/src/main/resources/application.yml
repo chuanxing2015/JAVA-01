@@ -1,0 +1,19 @@
+spring:
+  profiles:
+    active:
+  main:
+    web-application-type: none
+  datasource:
+      username: root
+      password: qwer1234
+      url: jdbc:mysql://localhost:3306/study?serverTimezone=UTC&useUnicode=true&characterEncoding=utf-8
+      driver-class-name: com.mysql.jdbc.Driver
+
+student:
+  open: true
+  name: zhangsan
+  age: 11
+
+
+
+
