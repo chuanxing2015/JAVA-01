@@ -1,0 +1,54 @@
+CREATE TABLE user (
+    `id` INT UNSIGNED AUTO_INCREMENT COMMENT '用户ID',
+    `username` VARCHAR(30) NOT NULL COMMENT '用户名称',
+    `age` TINYINT UNSIGNED NOT NULL COMMENT '用户年龄',
+    `sex` TINYINT NOT NULL  COMMENT '性别 0表示男，1表示女',
+    `phone` CHAR(11) NOT NULL COMMENT '用户电话',
+    `email` VARCHAR(50) NOT NULL COMMENT '邮箱',
+    `card` CHAR(18)  COMMENT '身份证号',
+    `password` VARCHAR(32) NOT NULL COMMENT '密码',
+    `register_time` BIGINT NOT NULL COMMENT '注册时间',
+    `change_time` BIGINT NOT NULL COMMENT '修改时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY ph_pass (`phone`,`password`)
+)ENGINE = innoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `order` (
+    `id` INT UNSIGNED AUTO_INCREMENT COMMENT '自增ID',
+    `order_id` VARCHAR(128) NOT NULL COMMENT '订单ID',
+    `uid` INT UNSIGNED  NOT NULL COMMENT '用户ID',
+    `gid` INT UNSIGNED NOT NULL COMMENT '商品ID',
+    `address` VARCHAR(200) NOT NULL COMMENT '邮寄地址',
+    `create_time` BIGINT NOT NULL COMMENT '下单时间',
+    `pay_time` BIGINT  COMMENT '支付时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY order_info (`order_id`)
+)ENGINE = innoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE goods (
+    `id` INT UNSIGNED AUTO_INCREMENT COMMENT '商品ID',
+    `name` VARCHAR(30) NOT NULL COMMENT '商品名称',
+    `price` INT UNSIGNED NOT NULL COMMENT '商品价格',
+    `cid1`  INT UNSIGNED NOT NULL  COMMENT '一级类目',
+    `cid2`  INT UNSIGNED NOT NULL COMMENT '二级类目',
+    `cid3`  INT UNSIGNED NOT NULL COMMENT '三级类目',
+    `desc`  TEXT NOT NULL COMMENT '商品描述',
+    `image_url` TINYTEXT NOT NULL COMMENT '商品图片',
+    `manufacturer` VARCHAR(60) NOT NULL COMMENT '生产商',
+    `first_time` BIGINT NOT NULL COMMENT '上架时间',
+    `last_time` BIGINT NOT NULL COMMENT '下架时间',
+    PRIMARY KEY (`id`)
+)ENGINE = innoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE address (
+    `id` INT UNSIGNED AUTO_INCREMENT COMMENT '自增',
+    `uid` INT UNSIGNED  NOT NULL COMMENT '用户ID',
+    `status`  TINYINT UNSIGNED NOT NULL COMMENT '地址状态',
+    `address` VARCHAR(200) NOT NULL COMMENT '邮寄地址',
+    `create_time` BIGINT NOT NULL COMMENT '创建时间',
+    `change_time` BIGINT  COMMENT '修改时间',
+    PRIMARY KEY (`id`)
+)ENGINE = innoDB DEFAULT CHARSET=utf8;
